@@ -1,6 +1,8 @@
 variable "access_key" {}
 variable "secret_key" {}
 variable "ansible_ssh_private_keyfile" {}
+variable "instance_count" {}
+
 
 provider "aws" {
   access_key = "${var.access_key}"
@@ -94,7 +96,7 @@ resource "null_resource" "cluster" {
 }
 
 resource "aws_instance" "example" {
-  count="2"
+  count="${var.instance_count}"
   ami           = "ami-0155216e"
   instance_type = "t2.micro"
   key_name = "lokesh"
@@ -107,7 +109,7 @@ resource "aws_instance" "example" {
 }
 
 resource "null_resource" "configure-mesos-ips" {
-  count = 2
+  count = "${var.instance_count}"
     provisioner "local-exec" {
         command = "echo ${element(aws_instance.example.*.public_ip, count.index)} ansible_ssh_private_key_file=${var.ansible_ssh_private_keyfile} ansible_ssh_user=ubuntu >> hosts"
     }
