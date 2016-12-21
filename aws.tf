@@ -114,39 +114,3 @@ resource "null_resource" "configure-mesos-ips" {
         command = "echo ${element(aws_instance.example.*.public_ip, count.index)} ansible_ssh_private_key_file=${var.ansible_ssh_private_keyfile} ansible_ssh_user=ubuntu >> hosts"
     }
 }
-
-resource "null_resource" "configure-wordpress" {
-    provisioner "local-exec" {
-        command = "sleep 60 && ANSIBLE_HOST_KEY_CHECKING=false ansible-playbook -i hosts site.yml --sudo"
-    }
-    depends_on = ["aws_instance.example"]
-}
-
-# LB setup
-# Create a new load balancer
-resource "aws_elb" "bar" {
-  name = "foobar-terraform-elb"
-
-  listener {
-    instance_port = 80
-    instance_protocol = "http"
-    lb_port = 80
-    lb_protocol = "http"
-  }
-
-  health_check {
-    healthy_threshold = 2
-    unhealthy_threshold = 2
-    timeout = 3
-    target = "HTTP:80/index.html"
-    interval = 30
-  }
-
-  security_groups = ["${aws_security_group.default.id}"]
-  subnets = ["${aws_subnet.main.id}"]
-  instances = ["${aws_instance.example.*.id}"]
-  cross_zone_load_balancing = true
-  idle_timeout = 400
-  connection_draining = true
-  connection_draining_timeout = 400
-}
